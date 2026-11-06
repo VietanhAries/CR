@@ -43,16 +43,12 @@ button:focus-visible,summary:focus-visible{outline:3px solid var(--pe);outline-o
 .chips button[aria-pressed=true]{background:var(--hd);color:#fff;border-color:var(--hd)}
 .right{display:flex;align-items:center;gap:10px;white-space:nowrap}
 .note{color:var(--mu);font-size:.8rem}
-.grid2{display:grid;grid-template-columns:1.15fr 1fr;gap:10px}
-.grid2 .card{margin:0 0 8px;min-width:0}
-.cols,.tcols{display:flex;align-items:flex-end;overflow-x:auto;padding-bottom:4px}
-.cols{gap:6px}.tcols{gap:14px}
-.col,.tcol{display:flex;flex-direction:column;align-items:center;gap:4px;color:var(--mu);font-size:.75rem;text-align:center}
-.col{min-width:44px}.tcol{min-width:110px}
-.col b{color:var(--tx);font-weight:600}
+.tcols{display:flex;align-items:flex-end;justify-content:space-evenly;gap:14px;overflow-x:auto;padding-bottom:4px}
+.tcol{display:flex;flex-direction:column;align-items:center;gap:4px;color:var(--mu);font-size:.75rem;text-align:center}
+.tcol{min-width:110px}
 .t{font-family:"Barlow Condensed","Arial Narrow",sans-serif;font-size:1.4rem;font-weight:700;line-height:1;color:var(--tx)}
 .stack{display:flex;flex-direction:column-reverse;border-radius:3px 3px 0 0;overflow:hidden;height:calc(var(--bh)*var(--r))}
-.col .stack{width:24px}.tcol .stack{width:52px}
+.tcol .stack{width:56px}
 .stack i{display:block;width:100%}
 .nmrow{display:flex;align-items:center;justify-content:center;gap:6px;margin-top:2px}
 .nm{font-weight:600;font-size:.75rem;text-transform:uppercase;letter-spacing:.02em;color:var(--tx)}
@@ -67,7 +63,7 @@ th,td{padding:6px;text-align:right;border-bottom:1px solid var(--line);white-spa
 th:first-child,td:first-child,th:nth-child(2),td:nth-child(2){text-align:left}
 th{color:var(--mu);font-weight:500}
 .warn{background:var(--pe);color:#2b1d00;padding:6px 12px;border-radius:6px;margin-bottom:10px;font-size:.8rem}
-@media(max-width:900px){.grid2{grid-template-columns:1fr}.kpi{grid-template-columns:1fr}h1{font-size:1.5rem}}
+@media(max-width:900px){.kpi{grid-template-columns:1fr}h1{font-size:1.5rem}}
 </style>
 </head>
 <body>
@@ -87,20 +83,18 @@ th{color:var(--mu);font-weight:500}
     <div class="chips" id="chips"></div>
     <div class="right"><span class="note" id="status">Đang tải…</span><button id="refresh">Làm mới</button></div>
   </div>
-  <div class="grid2">
-    <div class="card"><h2>Bàn thắng theo đội bóng</h2><div class="tcols" id="teams"></div></div>
-    <div class="card"><h2>Bàn thắng theo mùa</h2><div class="cols" id="cols"></div></div>
-  </div>
+  <div class="card"><h2>Bàn thắng theo đội bóng</h2><div class="tcols" id="teams"></div></div>
   <details class="card"><summary>Chi tiết từng mùa</summary><div class="scroll"><table id="tbl"></table></div></details>
 </main>
 <script>
 /* ====== CẤU HÌNH ======
+   Sheet: dòng 1 là tên cột, các dòng sau là dữ liệu. Cột Năm nên để định dạng "Văn bản thuần túy".
    SHEET_URL: dán link Google Sheet (hoặc thêm ?sheet=LINK vào địa chỉ trang).
    Sheet cần chia sẻ "Bất kỳ ai có đường liên kết đều xem được".
    Cột: Đội bóng | Năm | Tổng số bàn | Trực tiếp | Penalty | Đá phạt | Logo (tuỳ chọn, link ảnh) */
 const CONFIG = {
   SHEET_URL: "https://docs.google.com/spreadsheets/d/e/2PACX-1vTpdeW4IUJJCLd1FQf0tp6Tk7QPcdKQeRlaOcJoLbx7eFPXdFi3TI3Vt-BI4rUKXCidHkQBTF--xxpL/pub?gid=416152327&single=true&output=csv",
-  REFRESH_SECONDS: 30,
+  REFRESH_SECONDS: 15,
   PLAYER_NAME: "Cristiano Ronaldo",
   BIRTHDATE: "05/02/1985",
   IMG_DIR: "img/"   /* img/logo.png (góc trái), img/image.png (góc phải), img/realmadrid.png ... */
@@ -130,15 +124,20 @@ function parseCSV(t){const r=[];let row=[],f="",q=false;for(let i=0;i<t.length;i
   else if(c=='\n'||c=='\r'){if(c=='\r'&&t[i+1]=='\n')i++;row.push(f);r.push(row);row=[];f=""}else f+=c}
   if(f!==""||row.length){row.push(f);r.push(row)}return r}
 
+let info="";
 function parse(t){
-  const a=parseCSV(t).filter(r=>r.some(c=>c.trim()));if(!a.length)return[];
-  const h=a[0].map(norm);
+  const a=parseCSV(t).filter(r=>r.some(c=>c.trim()));
+  info=a.length+" dòng; dòng đầu: "+(a[0]||[]).slice(0,7).join(" | ");
+  if(!a.length)return[];
+  let hi=a.slice(0,5).findIndex(r=>{const x=r.map(norm);return x.some(c=>/doi bong|team|clb|club/.test(c))&&x.some(c=>/tong|total|truc tiep|penalty|da phat/.test(c))});
+  if(hi<0)hi=0;
+  const h=a[hi].map(norm);
   const find=(ks,skip)=>h.findIndex((x,i)=>i!==skip&&ks.some(k=>x.includes(k)));
   const ci={team:find(["doi bong","team","clb","cau lac bo","club"]),season:find(["nam","season","mua"]),
     total:find(["tong","total"]),logo:find(["logo"]),op:find(["truc tiep","open"]),pe:find(["penalty","phat den"])};
   ci.fk=find(["free","da phat"],ci.pe);
   ["team","season","total","op","pe","fk"].forEach((k,i)=>{if(ci[k]<0)ci[k]=i});
-  return a.slice(1).map(r=>{const g=k=>(r[ci[k]]||"").trim();
+  return a.slice(hi+1).map(r=>{const g=k=>(r[ci[k]]||"").trim();
     const op=num(g("op")),pe=num(g("pe")),fk=num(g("fk")),s=op+pe+fk,total=Math.max(num(g("total")),s);
     return{team:g("team"),season:g("season"),key:parseInt(g("season"))||9999,logo:g("logo"),op,pe,fk,total,un:total-s}
   }).filter(x=>x.team||x.season);
@@ -156,11 +155,6 @@ function render(){
   $("mainbar").innerHTML=S.total?segs(S,"width"):"";
   $("leg").innerHTML=CATS.filter(c=>c[0]!=="un"||S.un>0).map(c=>`<div style="border-color:var(--${c[0]})"><div class="num">${S[c[0]]}</div><span>${c[1]} · ${S.total?Math.round(S[c[0]]/S.total*100):0}%</span></div>`).join("");
   $("chips").innerHTML=["all",...names].map(n=>`<button data-t="${esc(n)}" aria-pressed="${n===team}">${n==="all"?"Tất cả đội":esc(n)}</button>`).join("");
-
-  const bySeason={};f.forEach(r=>{(bySeason[r.season]=bySeason[r.season]||{key:r.key,list:[]}).list.push(r)});
-  const seasons=Object.entries(bySeason).sort((a,b)=>a[1].key-b[1].key).map(([s,v])=>[s,sum(v.list)]);
-  const mx=Math.max(1,...seasons.map(s=>s[1].total));
-  $("cols").innerHTML=seasons.map(([s,t])=>`<div class="col"><b>${t.total}</b><div class="stack" style="--r:${t.total/mx}">${segs(t,"height")}</div><span>${esc(s)}</span></div>`).join("")||'<span class="note">Chưa có dữ liệu.</span>';
 
   const byTeam={};f.forEach(r=>(byTeam[r.team]=byTeam[r.team]||[]).push(r));
   const tl=Object.entries(byTeam).map(([n,l])=>[n,sum(l)]).sort((a,b)=>b[1].total-a[1].total);
@@ -182,7 +176,7 @@ function render(){
 function toCsv(u){
   let url=u;const m=u.match(/\/spreadsheets\/d\/([^/]+)/);
   if(m&&!/\/pub\?|gviz/.test(u)){const g=(u.match(/[#&?]gid=(\d+)/)||[])[1];
-    url=`https://docs.google.com/spreadsheets/d/${m[1]}/gviz/tq?tqx=out:csv${g?"&gid="+g:""}`}
+    url=`https://docs.google.com/spreadsheets/d/${m[1]}/gviz/tq?tqx=out:csv&headers=1${g?"&gid="+g:""}`}
   return url+(url.includes("?")?"&":"?")+"_="+Date.now();
 }
 
@@ -194,7 +188,8 @@ async function load(){
     if(!res.ok)throw new Error("HTTP "+res.status);
     const t=await res.text();
     if(/<html/i.test(t.slice(0,300)))throw new Error("Sheet chưa được chia sẻ công khai");
-    rows=parse(t);$("warn").innerHTML="";
+    rows=parse(t);
+    $("warn").innerHTML=rows.length?"":'<div class="warn">Đọc được sheet nhưng không có dòng dữ liệu ('+esc(info)+'). Dòng 1 cần có các tên cột: Đội bóng, Năm, Tổng số bàn, Trực tiếp, Penalty, Đá phạt.</div>';
     $("status").textContent="Cập nhật lúc "+new Date().toLocaleTimeString("vi-VN");render();
   }catch(e){
     $("status").textContent="Lỗi tải dữ liệu";
