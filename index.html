@@ -8,13 +8,24 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=Be+Vietnam+Pro:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
+/* ================= CSS = GIAO DIỆN (màu sắc, cỡ chữ, khoảng cách) =================
+   Muốn đổi MÀU: sửa các dòng trong :root ngay bên dưới.
+     --op  = màu "Trực tiếp" (xanh lá)     --pe = màu "Penalty" (vàng)
+     --fk  = màu "Đá phạt" (xanh dương)    --un = màu "Chưa phân loại" (xám)
+     --hd  = màu nền phần đầu trang        --bg = màu nền trang
+     --bh  = chiều cao tối đa của cột (đang tự co theo chiều cao màn hình;
+             muốn cột cao hơn thì giảm số 480, muốn thấp hơn thì tăng số 480)
+   Khối @media (prefers-color-scheme:dark) là màu khi máy bật chế độ tối. */
 :root{--bg:#eef1ee;--card:#fff;--tx:#14231c;--mu:#5d6b63;--line:#d9dfdb;--hd:#0f3d2e;--op:#1f7a4d;--pe:#e3a21a;--fk:#2f6fb5;--un:#aab4ae;
   --bh:clamp(70px,calc(100vh - 480px),240px)}
 @media (prefers-color-scheme:dark){:root{--bg:#0e1511;--card:#17211b;--tx:#eaf1ec;--mu:#97a69d;--line:#2a3830;--hd:#0a2a20;--op:#3fae77;--pe:#f0b43a;--fk:#5b9be0;--un:#56635b}}
+/* ----- Khung chung: font chữ, nền trang ----- */
 *{box-sizing:border-box}
 body{margin:0;background:var(--bg);color:var(--tx);font:14px/1.4 "Be Vietnam Pro",system-ui,sans-serif}
 .num,h1,.big{font-family:"Barlow Condensed","Arial Narrow",sans-serif}
 .wrap{max-width:1280px;margin:0 auto;padding:0 14px}
+/* ----- PHẦN ĐẦU TRANG: logo (trái) | tên + ngày sinh (giữa) | ảnh (phải) -----
+   Đổi kích thước logo/ảnh: sửa 56px ở .hero (grid-template-columns) và .hero img */
 header{background:var(--hd);color:#fff;padding:8px 0}
 .hero{border:2px solid rgba(255,255,255,.22);border-radius:6px;padding:6px 14px;display:grid;grid-template-columns:56px 1fr 56px;gap:14px;align-items:center}
 .hero img{width:56px;height:56px;object-fit:contain;display:block}
@@ -22,9 +33,11 @@ header{background:var(--hd);color:#fff;padding:8px 0}
 .ctr{text-align:center}
 h1{margin:0;font-size:1.8rem;font-weight:700;letter-spacing:.03em;line-height:1.05}
 .dob{opacity:.85;font-size:.9rem}
+/* ----- Khung nội dung chính và thẻ trắng (.card) ----- */
 main{max-width:1280px;margin:0 auto;padding:8px 14px}
 .card{background:var(--card);border:1px solid var(--line);border-radius:6px;padding:8px 14px;margin:0 0 8px}
 h2{margin:0 0 8px;font-size:.95rem;font-weight:600}
+/* ----- Ô TỔNG SỐ BÀN: số to bên trái, 3 loại bàn thắng bên phải, thanh chia màu bên dưới ----- */
 .kpi{display:grid;grid-template-columns:auto 1fr;gap:6px 24px;align-items:center}
 .lab{color:var(--mu);font-size:.8rem}
 .big{font-size:2.8rem;font-weight:700;line-height:.95}
@@ -36,6 +49,7 @@ h2{margin:0 0 8px;font-size:.95rem;font-weight:600}
 .sb{display:flex;height:10px;border-radius:3px;overflow:hidden;background:var(--line);grid-column:1/-1}
 .sb i{display:block;height:100%}
 i.op{background:var(--op)}i.pe{background:var(--pe)}i.fk{background:var(--fk)}i.un{background:var(--un)}
+/* ----- HÀNG NÚT LỌC ĐỘI + giờ cập nhật + nút Làm mới ----- */
 .tb{display:flex;justify-content:space-between;align-items:center;gap:10px;margin:0 0 8px}
 .chips{display:flex;flex-wrap:wrap;gap:6px}
 button{font:inherit;cursor:pointer;border-radius:6px;border:1px solid var(--line);background:var(--card);color:var(--tx);padding:4px 12px}
@@ -43,6 +57,10 @@ button:focus-visible,summary:focus-visible{outline:3px solid var(--pe);outline-o
 .chips button[aria-pressed=true]{background:var(--hd);color:#fff;border-color:var(--hd)}
 .right{display:flex;align-items:center;gap:10px;white-space:nowrap}
 .note{color:var(--mu);font-size:.8rem}
+/* ----- BIỂU ĐỒ CỘT ĐỨNG THEO ĐỘI -----
+   .tcol = 1 cột (min-width = độ rộng tối thiểu của mỗi cột đội)
+   .tcol .stack{width:56px} = độ rộng thân cột
+   .t = số bàn trên đầu cột, .nm = tên đội dưới cột */
 .tcols{display:flex;align-items:flex-end;justify-content:space-evenly;gap:14px;overflow-x:auto;padding-bottom:4px}
 .tcol{display:flex;flex-direction:column;align-items:center;gap:4px;color:var(--mu);font-size:.75rem;text-align:center}
 .tcol{min-width:110px}
@@ -52,54 +70,78 @@ button:focus-visible,summary:focus-visible{outline:3px solid var(--pe);outline-o
 .stack i{display:block;width:100%}
 .nmrow{display:flex;align-items:center;justify-content:center;gap:6px;margin-top:2px}
 .nm{font-weight:600;font-size:.75rem;text-transform:uppercase;letter-spacing:.02em;color:var(--tx)}
+/* ----- Logo tròn dưới mỗi cột (width/height 28px = cỡ logo) ----- */
 .lg{position:relative;width:28px;height:28px;flex:none}
 .lg .badge,.lg img{position:absolute;inset:0;width:100%;height:100%;border-radius:50%}
 .lg .badge{background:var(--hd);color:#fff;display:flex;align-items:center;justify-content:center;font-size:.65rem;font-weight:600}
 .lg img{object-fit:contain;background:#fff}
+/* ----- Bảng chi tiết từng mùa (mục bấm để mở) ----- */
 details summary{cursor:pointer;font-weight:600;font-size:.95rem}
 .scroll{overflow-x:auto;margin-top:8px}
 table{width:100%;border-collapse:collapse;font-size:.9rem}
 th,td{padding:6px;text-align:right;border-bottom:1px solid var(--line);white-space:nowrap}
 th:first-child,td:first-child,th:nth-child(2),td:nth-child(2){text-align:left}
 th{color:var(--mu);font-weight:500}
+/* ----- Dòng thông báo màu vàng (khi lỗi hoặc dữ liệu mẫu) ----- */
 .warn{background:var(--pe);color:#2b1d00;padding:6px 12px;border-radius:6px;margin-bottom:10px;font-size:.8rem}
+/* ----- Màn hình nhỏ (điện thoại): xếp lại bố cục ----- */
 @media(max-width:900px){.kpi{grid-template-columns:1fr}h1{font-size:1.5rem}}
 </style>
 </head>
 <body>
+<!-- ================= HTML = KHUNG TRANG (thứ tự các khối từ trên xuống) ================= -->
+<!-- 1) PHẦN ĐẦU TRANG: logo.png | tên + ngày sinh | image.png (nội dung điền bằng CONFIG bên dưới) -->
 <header><div class="wrap"><div class="hero">
   <img id="logoimg" alt="" onerror="this.style.visibility='hidden'">
   <div class="ctr"><h1 id="pname"></h1><div class="dob" id="pdob"></div></div>
   <img id="photoimg" class="ph" alt="" onerror="this.style.visibility='hidden'">
 </div></div></header>
+<!-- 2) NỘI DUNG CHÍNH -->
 <main>
+  <!-- Chỗ hiện dòng thông báo vàng (lỗi tải sheet / dữ liệu mẫu) -->
   <div id="warn"></div>
+  <!-- Ô tổng số bàn + Trực tiếp / Penalty / Đá phạt (số liệu do JS điền) -->
   <div class="card kpi">
     <div><div class="lab" id="title">Tổng số bàn thắng</div><div class="big"><span id="total">0</span><small>bàn</small></div></div>
     <div class="leg" id="leg"></div>
     <div class="sb" id="mainbar"></div>
   </div>
+  <!-- Hàng nút lọc đội + giờ cập nhật + nút Làm mới -->
   <div class="tb">
     <div class="chips" id="chips"></div>
     <div class="right"><span class="note" id="status">Đang tải…</span><button id="refresh">Làm mới</button></div>
   </div>
+  <!-- Biểu đồ cột đứng theo đội (đổi tiêu đề ở chữ trong <h2>) -->
   <div class="card"><h2>Bàn thắng theo đội bóng</h2><div class="tcols" id="teams"></div></div>
+  <!-- Bảng chi tiết từng mùa (bấm để mở). Đổi tên mục ở chữ trong <summary> -->
   <details class="card"><summary>Chi tiết từng mùa</summary><div class="scroll"><table id="tbl"></table></div></details>
 </main>
 <script>
+/* ================= JAVASCRIPT = XỬ LÝ SỐ LIỆU =================
+   MỤC LỤC (tìm bằng Ctrl+F):
+     1. CẤU HÌNH          - link sheet, tên, ngày sinh, thư mục ảnh  (hay sửa nhất)
+     2. DỮ LIỆU MẪU       - hiện khi chưa nối sheet
+     3. HÀM TIỆN ÍCH      - các hàm nhỏ dùng chung
+     4. NHÃN & MÀU 3 LOẠI - tên 3 loại bàn thắng
+     5. ĐỌC FILE CSV      - đọc bảng từ Google Sheet
+     6. VẼ GIAO DIỆN      - hàm render(): tổng, nút lọc, biểu đồ, bảng
+     7. TẢI TỪ SHEET      - toCsv(), load(), tự làm mới
+*/
 /* ====== CẤU HÌNH ======
    Sheet: dòng 1 là tên cột, các dòng sau là dữ liệu. Cột Năm nên để định dạng "Văn bản thuần túy".
    SHEET_URL: dán link Google Sheet (hoặc thêm ?sheet=LINK vào địa chỉ trang).
    Sheet cần chia sẻ "Bất kỳ ai có đường liên kết đều xem được".
    Cột: Đội bóng | Năm | Tổng số bàn | Trực tiếp | Penalty | Đá phạt | Logo (tuỳ chọn, link ảnh) */
 const CONFIG = {
+  // Link Google Sheet đã "Xuất bản lên web" dạng CSV (hoặc thêm ?sheet=LINK vào địa chỉ trang)
   SHEET_URL: "https://docs.google.com/spreadsheets/d/e/2PACX-1vTpdeW4IUJJCLd1FQf0tp6Tk7QPcdKQeRlaOcJoLbx7eFPXdFi3TI3Vt-BI4rUKXCidHkQBTF--xxpL/pub?gid=416152327&single=true&output=csv",
-  REFRESH_SECONDS: 15,
-  PLAYER_NAME: "Cristiano Ronaldo",
-  BIRTHDATE: "05/02/1985",
+  REFRESH_SECONDS: 15,   // tự tải lại sheet sau mỗi N giây
+  PLAYER_NAME: "Cristiano Ronaldo",   // tên hiện ở giữa phần đầu trang
+  BIRTHDATE: "05/02/1985",   // ngày sinh (hiện dòng dưới tên)
   IMG_DIR: "img/"   /* img/logo.png (góc trái), img/image.png (góc phải), img/realmadrid.png ... */
 };
 
+// ===== 2. DỮ LIỆU MẪU: chỉ hiện khi SHEET_URL để trống. Có link sheet thì bỏ qua đoạn này =====
 const SAMPLE = [
   {team:"CLB mẫu 1",season:"2015-2016",total:20,op:12,pe:5,fk:3},
   {team:"CLB mẫu 1",season:"2016-2017",total:25,op:15,pe:6,fk:4},
@@ -107,6 +149,9 @@ const SAMPLE = [
   {team:"CLB mẫu 2",season:"2018-2019",total:18,op:10,pe:6,fk:2}
 ].map(r=>({...r,key:parseInt(r.season),logo:"",un:0}));
 
+// ===== 3. HÀM TIỆN ÍCH =====
+// $ = lấy phần tử theo id | esc = chống lỗi ký tự lạ | num = đọc số | norm = bỏ dấu, chữ thường
+// slug = biến tên đội thành tên file ảnh ("Real Madrid" -> "realmadrid") | logoNext = thử các đuôi ảnh png/jpg/webp/svg
 const $=id=>document.getElementById(id);
 const esc=s=>String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const num=v=>{const n=parseInt(String(v||"").replace(/[^\d-]/g,""),10);return isNaN(n)?0:n};
@@ -114,16 +159,26 @@ const norm=s=>s.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"").re
 const slug=n=>norm(n).replace(/[^a-z0-9]/g,"");
 const EXTS=["png","jpg","jpeg","webp","svg"];
 function logoNext(i){const b=i.dataset.b,n=+i.dataset.i+1;if(!b||n>=EXTS.length){i.remove();return}i.dataset.i=n;i.src=b+"."+EXTS[n]}
+// SRC = link sheet đang dùng (ưu tiên ?sheet= trên địa chỉ trang, sau đó tới CONFIG.SHEET_URL)
 const SRC=new URLSearchParams(location.search).get("sheet")||CONFIG.SHEET_URL;
+// ===== 4. NHÃN & MÀU 3 LOẠI BÀN THẮNG =====
+// Mỗi dòng: [mã loại, tên hiển thị]. Muốn đổi chữ hiển thị thì sửa chữ thứ hai.
+// Màu của từng loại nằm ở CSS (--op, --pe, --fk, --un).
 const CATS=[["op","Trực tiếp"],["pe","Penalty"],["fk","Đá phạt"],["un","Chưa phân loại"]];
 let rows=[],team="all";
 
+// ===== 5. ĐỌC FILE CSV =====
+// parseCSV: tách văn bản CSV thành các dòng/ô (không cần sửa)
 function parseCSV(t){const r=[];let row=[],f="",q=false;for(let i=0;i<t.length;i++){const c=t[i];
   if(q){if(c=='"'){if(t[i+1]=='"'){f+='"';i++}else q=false}else f+=c}
   else if(c=='"')q=true;else if(c==','){row.push(f);f=""}
   else if(c=='\n'||c=='\r'){if(c=='\r'&&t[i+1]=='\n')i++;row.push(f);r.push(row);row=[];f=""}else f+=c}
   if(f!==""||row.length){row.push(f);r.push(row)}return r}
 
+// parse: tìm dòng tiêu đề rồi đọc từng dòng dữ liệu.
+// Cột được nhận ra theo TÊN CỘT trong sheet (không phân biệt hoa thường, không cần dấu).
+// Muốn thêm tên cột khác được nhận, thêm từ khóa (đã bỏ dấu, chữ thường) vào các danh sách trong find([...]) bên dưới:
+//   team = đội bóng | season = năm | total = tổng | op = trực tiếp | pe = penalty | fk = đá phạt | logo = link logo
 let info="";
 function parse(t){
   const a=parseCSV(t).filter(r=>r.some(c=>c.trim()));
@@ -143,19 +198,26 @@ function parse(t){
   }).filter(x=>x.team||x.season);
 }
 
+// sum: cộng số bàn của nhiều dòng | segs: vẽ các đoạn màu trong thanh/cột
 const sum=a=>a.reduce((s,r)=>({op:s.op+r.op,pe:s.pe+r.pe,fk:s.fk+r.fk,un:s.un+r.un,total:s.total+r.total}),{op:0,pe:0,fk:0,un:0,total:0});
 const segs=(t,dir)=>CATS.filter(c=>t[c[0]]>0).map(c=>`<i class="${c[0]}" style="${dir}:${t[c[0]]/t.total*100}%" title="${c[1]}: ${t[c[0]]}"></i>`).join("");
 
+// ===== 6. VẼ GIAO DIỆN =====
+// render() chạy mỗi lần có dữ liệu mới hoặc khi bấm nút lọc đội.
 function render(){
+  // (1) Lọc theo đội đang chọn rồi tính tổng
   const names=[...new Set(rows.map(r=>r.team))];
   if(team!=="all"&&!names.includes(team))team="all";
   const f=rows.filter(r=>team==="all"||r.team===team),S=sum(f);
+  // (2) Ô tổng số bàn + thanh chia 3 màu + 3 ô chú thích (Trực tiếp / Penalty / Đá phạt)
   $("title").textContent=team==="all"?"Tổng số bàn thắng":"Bàn thắng – "+team;
   $("total").textContent=S.total;
   $("mainbar").innerHTML=S.total?segs(S,"width"):"";
   $("leg").innerHTML=CATS.filter(c=>c[0]!=="un"||S.un>0).map(c=>`<div style="border-color:var(--${c[0]})"><div class="num">${S[c[0]]}</div><span>${c[1]} · ${S.total?Math.round(S[c[0]]/S.total*100):0}%</span></div>`).join("");
+  // (3) Các nút lọc đội
   $("chips").innerHTML=["all",...names].map(n=>`<button data-t="${esc(n)}" aria-pressed="${n===team}">${n==="all"?"Tất cả đội":esc(n)}</button>`).join("");
 
+  // (4) Biểu đồ cột đứng theo đội
   /* Mỗi "lần tham gia" của một đội là 1 cột riêng: các mùa liền nhau thì gộp, cách quãng thì tách */
   const byTeam={};f.forEach(r=>(byTeam[r.team]=byTeam[r.team]||[]).push(r));
   const spells=[];
@@ -171,7 +233,12 @@ function render(){
       }else{if(!cur){cur={n,rows:[]};spells.push(cur)}cur.rows.push(r)}
     });
   });
-  const tl=spells.map(sp=>({n:sp.n,rows:sp.rows,t:sum(sp.rows)})).sort((x,y)=>y.t.total-x.t.total);
+  /* Sắp xếp theo thời gian tham gia (năm bắt đầu); đội tuyển quốc gia luôn nằm cuối.
+     Muốn đổi cách nhận ra đội tuyển: sửa các từ trong /dtqg|doi tuyen|national/ (viết thường, không dấu) */
+  const isNat=n=>/dtqg|doi tuyen|national/.test(norm(n));
+  const startOf=rs=>{const y=rs.flatMap(r=>(r.season.match(/\d{4}/g)||[]).map(Number));return y.length?Math.min(...y):9999};
+  const tl=spells.map(sp=>({n:sp.n,rows:sp.rows,t:sum(sp.rows),st:startOf(sp.rows),nat:isNat(sp.n)}))
+    .sort((x,y)=>(x.nat-y.nat)||(x.st-y.st)||(y.t.total-x.t.total));
   const tm=Math.max(1,...tl.map(x=>x.t.total));
   $("teams").innerHTML=tl.map(({n,rows:l,t})=>{
     const ys=l.flatMap(r=>(r.season.match(/\d{4}/g)||[]).map(Number));
@@ -181,12 +248,15 @@ function render(){
     const base=CONFIG.IMG_DIR+slug(n);
     return `<div class="tcol"><span class="t">${t.total}</span><div class="stack" style="--r:${t.total/tm}">${segs(t,"height")}</div><div class="nmrow"><span class="nm">${esc(n)}</span><span class="lg"><span class="badge">${esc(ini)}</span><img src="${esc(lg||base+".png")}" alt="" data-b="${esc(lg?"":base)}" data-i="0" onerror="logoNext(this)"></span></div><span>${esc(yr)}</span></div>`}).join("")||'<span class="note">Chưa có dữ liệu.</span>';
 
+  // (5) Bảng chi tiết từng mùa (nằm trong mục bấm để mở)
   const showUn=S.un>0;
   $("tbl").innerHTML=`<tr><th>Mùa</th><th>Đội</th><th>Tổng</th><th>Trực tiếp</th><th>Penalty</th><th>Đá phạt</th>${showUn?"<th>Chưa phân loại</th>":""}</tr>`+
     [...f].sort((a,b)=>a.key-b.key).map(r=>`<tr><td>${esc(r.season)}</td><td>${esc(r.team)}</td><td><b>${r.total}</b></td><td>${r.op}</td><td>${r.pe}</td><td>${r.fk}</td>${showUn?`<td>${r.un}</td>`:""}</tr>`).join("")+
     `<tr><td><b>Cộng</b></td><td></td><td><b>${S.total}</b></td><td>${S.op}</td><td>${S.pe}</td><td>${S.fk}</td>${showUn?`<td>${S.un}</td>`:""}</tr>`;
 }
 
+// ===== 7. TẢI DỮ LIỆU TỪ GOOGLE SHEET =====
+// toCsv: chuẩn hóa link sheet (link "pub?...output=csv" dùng nguyên, không cần sửa)
 function toCsv(u){
   let url=u;const m=u.match(/\/spreadsheets\/d\/([^/]+)/);
   if(m&&!/\/pub\?|gviz/.test(u)){const g=(u.match(/[#&?]gid=(\d+)/)||[])[1];
@@ -194,6 +264,7 @@ function toCsv(u){
   return url+(url.includes("?")?"&":"?")+"_="+Date.now();
 }
 
+// load: tải sheet -> đọc -> vẽ lại. Báo lỗi bằng dòng vàng nếu không đọc được.
 async function load(){
   if(!SRC){rows=SAMPLE;$("warn").innerHTML='<div class="warn">Đang hiển thị dữ liệu mẫu. Dán link Google Sheet vào <b>CONFIG.SHEET_URL</b> trong file để hiện số liệu thật.</div>';
     $("status").textContent="Dữ liệu mẫu";render();return}
@@ -211,6 +282,7 @@ async function load(){
     if(rows.length)render();
   }
 }
+// Khởi động: điền tên/ngày sinh, nạp ảnh logo.png + image.png, gắn nút bấm, tải dữ liệu và hẹn giờ tự làm mới
 $("pname").textContent=CONFIG.PLAYER_NAME;
 $("pdob").textContent="Sinh ngày "+CONFIG.BIRTHDATE;
 $("logoimg").src=CONFIG.IMG_DIR+"logo.png";
