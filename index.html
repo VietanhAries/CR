@@ -156,13 +156,27 @@ function render(){
   $("leg").innerHTML=CATS.filter(c=>c[0]!=="un"||S.un>0).map(c=>`<div style="border-color:var(--${c[0]})"><div class="num">${S[c[0]]}</div><span>${c[1]} · ${S.total?Math.round(S[c[0]]/S.total*100):0}%</span></div>`).join("");
   $("chips").innerHTML=["all",...names].map(n=>`<button data-t="${esc(n)}" aria-pressed="${n===team}">${n==="all"?"Tất cả đội":esc(n)}</button>`).join("");
 
+  /* Mỗi "lần tham gia" của một đội là 1 cột riêng: các mùa liền nhau thì gộp, cách quãng thì tách */
   const byTeam={};f.forEach(r=>(byTeam[r.team]=byTeam[r.team]||[]).push(r));
-  const tl=Object.entries(byTeam).map(([n,l])=>[n,sum(l)]).sort((a,b)=>b[1].total-a[1].total);
-  const tm=Math.max(1,...tl.map(t=>t[1].total));
-  $("teams").innerHTML=tl.map(([n,t])=>{const l=byTeam[n];
+  const spells=[];
+  Object.entries(byTeam).forEach(([n,l])=>{
+    let cur=null,pe=0,pr=false;
+    [...l].sort((x,y)=>x.key-y.key).forEach(r=>{
+      const ys=(r.season.match(/\d{4}/g)||[]).map(Number);
+      if(ys.length){
+        const a=Math.min(...ys),z=Math.max(...ys),rg=a!==z;
+        if(!cur||a>pe+(pr?0:1)){cur={n,rows:[]};spells.push(cur);pe=z;pr=rg}
+        else if(z>=pe){pe=z;pr=rg}
+        cur.rows.push(r);
+      }else{if(!cur){cur={n,rows:[]};spells.push(cur)}cur.rows.push(r)}
+    });
+  });
+  const tl=spells.map(sp=>({n:sp.n,rows:sp.rows,t:sum(sp.rows)})).sort((x,y)=>y.t.total-x.t.total);
+  const tm=Math.max(1,...tl.map(x=>x.t.total));
+  $("teams").innerHTML=tl.map(({n,rows:l,t})=>{
     const ys=l.flatMap(r=>(r.season.match(/\d{4}/g)||[]).map(Number));
     const a=Math.min(...ys),z=Math.max(...ys),yr=ys.length?(a===z?""+a:a+" - "+z):"";
-    const lg=(l.find(r=>/^https?:\/\//i.test(r.logo))||{}).logo;
+    const lg=(byTeam[n].find(r=>/^https?:\/\//i.test(r.logo))||{}).logo;
     const ini=n.split(/\s+/).map(w=>w[0]).join("").slice(0,2).toUpperCase();
     const base=CONFIG.IMG_DIR+slug(n);
     return `<div class="tcol"><span class="t">${t.total}</span><div class="stack" style="--r:${t.total/tm}">${segs(t,"height")}</div><div class="nmrow"><span class="nm">${esc(n)}</span><span class="lg"><span class="badge">${esc(ini)}</span><img src="${esc(lg||base+".png")}" alt="" data-b="${esc(lg?"":base)}" data-i="0" onerror="logoNext(this)"></span></div><span>${esc(yr)}</span></div>`}).join("")||'<span class="note">Chưa có dữ liệu.</span>';
