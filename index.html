@@ -15,12 +15,12 @@
      --hd  = màu nền phần đầu trang        --bg = màu nền trang
      --veil = lớp phủ mờ lên ảnh nền để chữ dễ đọc (rgba cuối là độ đậm: .0 = không phủ, .5 = phủ nhiều)
      --bh  = chiều cao tối đa của cột (đang tự co theo chiều cao màn hình;
-             muốn cột cao hơn thì giảm số 480, muốn thấp hơn thì tăng số 480)
+             muốn cột cao hơn thì giảm số 540, muốn thấp hơn thì tăng số 540)
    Khối @media (prefers-color-scheme:dark) là màu khi máy bật chế độ tối. */
-:root{--bg:#eef1ee;--card:#fff;--tx:#14231c;--mu:#5d6b63;--line:#d9dfdb;--hd:#0f3d2e;--op:#1f7a4d;--pe:#e3a21a;--fk:#2f6fb5;--un:#aab4ae;
-  --bh:clamp(70px,calc(100vh - 480px),240px);
-  --veil:rgba(0,0,0,.2)}
-@media (prefers-color-scheme:dark){:root{--bg:#0e1511;--card:#17211b;--tx:#eaf1ec;--mu:#97a69d;--line:#2a3830;--hd:#0a2a20;--op:#3fae77;--pe:#f0b43a;--fk:#5b9be0;--un:#56635b;--veil:rgba(0,0,0,.25)}}
+:root{--bg:#eef1ee;--card:#fff;--tx:#14231c;--mu:#5d6b63;--line:#d9dfdb;--hd:#0f3d2e;--op:#1f7a4d;--pe:#e3a21a;--fk:#2f6fb5;--un:#85918a;
+  --bh:clamp(70px,calc(100vh - 540px),240px);
+  --veil:rgba(0,0,0,.08)}
+@media (prefers-color-scheme:dark){:root{--bg:#0e1511;--card:#17211b;--tx:#eaf1ec;--mu:#97a69d;--line:#2a3830;--hd:#0a2a20;--op:#3fae77;--pe:#f0b43a;--fk:#5b9be0;--un:#56635b;--veil:rgba(0,0,0,.15)}}
 /* ----- Khung chung: font chữ, nền trang ----- */
 *{box-sizing:border-box}
 /* ẢNH NỀN: img/nen.png (nằm cạnh logo.png). Chưa có ảnh thì tự dùng màu --bg.
@@ -39,8 +39,10 @@ h1{margin:0;font-size:1.8rem;font-weight:700;letter-spacing:.03em;line-height:1.
 .dob{opacity:.85;font-size:.9rem}
 /* ----- Khung nội dung chính và thẻ trắng (.card) ----- */
 main{max-width:1280px;margin:0 auto;padding:8px 14px}
-.card{background:var(--card);background:color-mix(in srgb,var(--card) 93%,transparent);border:1px solid var(--line);border-radius:6px;padding:8px 14px;margin:0 0 8px}
-h2{margin:0 0 8px;font-size:.90rem;font-weight:600}
+/* ĐỘ TRONG CỦA THẺ: số % trong color-mix (70%) càng nhỏ thì thẻ càng trong, thấy nhiều ảnh nền hơn (100% = đặc hoàn toàn).
+   blur(4px) làm mờ ảnh phía sau thẻ để chữ vẫn dễ đọc; tăng/giảm số 4 tùy ý, bỏ hẳn nếu máy chậm. */
+.card{background:var(--card);background:color-mix(in srgb,var(--card) 70%,transparent);-webkit-backdrop-filter:blur(4px);backdrop-filter:blur(4px);border:1px solid var(--line);border-radius:6px;padding:8px 14px;margin:0 0 8px}
+h2{margin:0 0 8px;font-size:.95rem;font-weight:600}
 /* ----- Ô TỔNG SỐ BÀN: số to bên trái, 3 loại bàn thắng bên phải, thanh chia màu bên dưới ----- */
 .kpi{display:grid;grid-template-columns:auto 1fr;gap:6px 24px;align-items:center}
 .lab{color:var(--mu);font-size:.8rem}
@@ -53,6 +55,19 @@ h2{margin:0 0 8px;font-size:.90rem;font-weight:600}
 .sb{display:flex;height:10px;border-radius:3px;overflow:hidden;background:var(--line);grid-column:1/-1}
 .sb i{display:block;height:100%}
 i.op{background:var(--op)}i.pe{background:var(--pe)}i.fk{background:var(--fk)}i.un{background:var(--un)}
+/* ----- HÀNG DANH HIỆU (nằm cuối ô tổng số bàn) -----
+   .h = 1 danh hiệu | .pic = ảnh minh họa (40px, đổi ở width/height) | .hc = số lần (×5) | .hn = tên danh hiệu
+   minmax(150px,1fr): mỗi danh hiệu rộng tối thiểu 150px, hết chỗ thì tự xuống hàng */
+.hon{grid-column:1/-1;display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:6px 16px;border-top:1px solid var(--line);padding-top:8px;margin-top:2px}
+.hon[hidden]{display:none}
+.h{display:flex;align-items:center;gap:8px;min-width:0}
+.pic{position:relative;width:40px;height:40px;flex:none}
+.pic .b2,.pic img{position:absolute;inset:0;width:100%;height:100%;border-radius:8px}
+.pic .b2{background:var(--pe);color:#2b1d00;display:flex;align-items:center;justify-content:center;font-size:1.3rem}
+.pic img{object-fit:contain}
+.ht{display:flex;flex-direction:column;min-width:0}
+.hc{font-family:"Barlow Condensed","Arial Narrow",sans-serif;font-size:1.4rem;font-weight:700;line-height:1}
+.hn{font-size:.75rem;color:var(--mu);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 /* ----- HÀNG NÚT LỌC ĐỘI + giờ cập nhật + nút Làm mới ----- */
 .tb{display:flex;justify-content:space-between;align-items:center;gap:10px;margin:0 0 8px}
 .chips{display:flex;flex-wrap:wrap;gap:6px}
@@ -109,6 +124,8 @@ th{color:var(--mu);font-weight:500}
     <div><div class="lab" id="title">Tổng số bàn thắng</div><div class="big"><span id="total">0</span><small>bàn</small></div></div>
     <div class="leg" id="leg"></div>
     <div class="sb" id="mainbar"></div>
+    <!-- Hàng danh hiệu: JS điền từ tab "Danh hiệu" của Google Sheet (ẩn nếu chưa có HONORS_URL) -->
+    <div class="hon" id="honors" hidden></div>
   </div>
   <!-- Hàng nút lọc đội + giờ cập nhật + nút Làm mới -->
   <div class="tb">
@@ -130,6 +147,7 @@ th{color:var(--mu);font-weight:500}
      5. ĐỌC FILE CSV      - đọc bảng từ Google Sheet
      6. VẼ GIAO DIỆN      - hàm render(): tổng, nút lọc, biểu đồ, bảng
      7. TẢI TỪ SHEET      - toCsv(), load(), tự làm mới
+     8. DANH HIỆU         - đọc tab Danh hiệu và vẽ hàng danh hiệu
 */
 /* ====== CẤU HÌNH ======
    Sheet: dòng 1 là tên cột, các dòng sau là dữ liệu. Cột Năm nên để định dạng "Văn bản thuần túy".
@@ -140,6 +158,8 @@ const CONFIG = {
   // Link Google Sheet đã "Xuất bản lên web" dạng CSV (hoặc thêm ?sheet=LINK vào địa chỉ trang)
   SHEET_URL: "https://docs.google.com/spreadsheets/d/e/2PACX-1vTpdeW4IUJJCLd1FQf0tp6Tk7QPcdKQeRlaOcJoLbx7eFPXdFi3TI3Vt-BI4rUKXCidHkQBTF--xxpL/pub?gid=416152327&single=true&output=csv",
   REFRESH_SECONDS: 15,   // tự tải lại sheet sau mỗi N giây
+  // Link tab "Danh hiệu" của Google Sheet (Xuất bản lên web -> chọn đúng tab đó -> định dạng CSV). Để trống = ẩn hàng danh hiệu
+  HONORS_URL: "https://docs.google.com/spreadsheets/d/e/2PACX-1vTpdeW4IUJJCLd1FQf0tp6Tk7QPcdKQeRlaOcJoLbx7eFPXdFi3TI3Vt-BI4rUKXCidHkQBTF--xxpL/pub?gid=209915987&single=true&output=csv",
   PLAYER_NAME: "Cristiano Ronaldo",   // tên hiện ở giữa phần đầu trang
   BIRTHDATE: "05/02/1985",   // ngày sinh (hiện dòng dưới tên)
   IMG_DIR: "img/"   /* img/logo.png (góc trái), img/image.png (góc phải), img/realmadrid.png ... */
@@ -259,6 +279,44 @@ function render(){
     `<tr><td><b>Cộng</b></td><td></td><td><b>${S.total}</b></td><td>${S.op}</td><td>${S.pe}</td><td>${S.fk}</td>${showUn?`<td>${S.un}</td>`:""}</tr>`;
 }
 
+// ===== 8. DANH HIỆU =====
+// Tab "Danh hiệu" trong Google Sheet có các cột: Danh hiệu | Số lần | Ảnh (tuỳ chọn) | Ghi chú (tuỳ chọn)
+// Ảnh minh họa: mặc định là img/<tên danh hiệu viết liền, không dấu>.png (ví dụ "Quả bóng vàng" -> img/quabongvang.png).
+// Cột Ảnh (nếu điền): tên file trong img/ (vd quabongvang.png) hoặc link ảnh https://...
+// Ghi chú hiện khi rê chuột vào danh hiệu (vd các năm đạt được).
+const HSRC=new URLSearchParams(location.search).get("honors")||CONFIG.HONORS_URL;
+let honorsKey="";
+function parseHonors(t){
+  const a=parseCSV(t).filter(r=>r.some(c=>c.trim()));if(!a.length)return[];
+  let hi=a.slice(0,5).findIndex(r=>r.map(norm).some(c=>/danh hieu|title|honou?r/.test(c)));if(hi<0)hi=0;
+  const h=a[hi].map(norm);
+  const find=re=>h.findIndex(x=>re.test(x));
+  const ci={name:find(/danh hieu|title|honou?r/),count:find(/so lan|count|so luong/),img:find(/^anh\b|image|hinh|icon/),note:find(/ghi chu|note|year|nam\b/)};
+  ["name","count","img","note"].forEach((k,i)=>{if(ci[k]<0)ci[k]=i});
+  return a.slice(hi+1).map(r=>{const g=k=>(r[ci[k]]||"").trim();
+    return{name:g("name"),count:num(g("count")),img:g("img"),note:g("note")}}).filter(x=>x.name);
+}
+function renderHonors(list){
+  const el=$("honors"),key=JSON.stringify(list);
+  if(!list.length){el.hidden=true;el.innerHTML="";honorsKey="";return}
+  if(key===honorsKey)return;   // không đổi thì khỏi vẽ lại
+  honorsKey=key;el.hidden=false;
+  el.innerHTML=list.map(h=>{
+    const isUrl=/^https?:\/\//i.test(h.img);
+    const base=CONFIG.IMG_DIR+(h.img&&!isUrl?h.img.replace(/\.(png|jpe?g|webp|svg)$/i,""):slug(h.name));
+    return `<div class="h" title="${esc(h.note||h.name)}"><span class="pic"><span class="b2">★</span><img src="${esc(isUrl?h.img:base+".png")}" alt="" data-b="${esc(isUrl?"":base)}" data-i="0" onerror="logoNext(this)"></span><span class="ht"><span class="hc">${h.count?"×"+h.count:""}</span><span class="hn">${esc(h.name)}</span></span></div>`}).join("");
+}
+async function loadHonors(){
+  if(!HSRC){renderHonors([]);return}
+  try{
+    const res=await fetch(toCsv(HSRC),{cache:"no-store"});
+    if(!res.ok)throw new Error("HTTP "+res.status);
+    const t=await res.text();
+    if(/<html/i.test(t.slice(0,300)))throw new Error("tab chưa xuất bản");
+    renderHonors(parseHonors(t));
+  }catch(e){/* lỗi thì giữ nguyên hàng danh hiệu đang hiển thị */}
+}
+
 // ===== 7. TẢI DỮ LIỆU TỪ GOOGLE SHEET =====
 // toCsv: chuẩn hóa link sheet (link "pub?...output=csv" dùng nguyên, không cần sửa)
 function toCsv(u){
@@ -294,6 +352,7 @@ $("photoimg").src=CONFIG.IMG_DIR+"image.png";
 $("chips").addEventListener("click",e=>{const b=e.target.closest("button");if(b){team=b.dataset.t;render()}});
 $("refresh").addEventListener("click",load);
 load();setInterval(load,CONFIG.REFRESH_SECONDS*1000);
+loadHonors();setInterval(loadHonors,CONFIG.REFRESH_SECONDS*1000);
 </script>
 </body>
 </html>
