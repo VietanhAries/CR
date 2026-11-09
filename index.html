@@ -134,6 +134,11 @@ button:focus-visible,summary:focus-visible{outline:3px solid var(--pe);outline-o
 .pic.sm{width:22px;height:22px}
 .pic.sm .b2{font-size:.8rem;border-radius:5px}
 .mo{margin:10px 0 0;font-size:.85rem}
+/* ----- KHỐI "DANH HIỆU THEO MÙA" trong bảng chi tiết đội (.hsy = cột mùa, đổi min-width cho rộng/hẹp) ----- */
+.hs{margin-top:12px;border-top:1px solid var(--line);padding-top:8px}
+.hst{font-weight:600;font-size:.9rem;margin-bottom:2px}
+.hsr{display:flex;gap:12px;align-items:center;padding:4px 0;border-bottom:1px dashed var(--line)}
+.hsy{min-width:100px;color:var(--mu);font-size:.85rem;flex:none}
 /* ----- Bảng chi tiết từng mùa (mục bấm để mở) ----- */
 details summary{cursor:pointer;font-weight:600;font-size:.95rem}
 .scroll{overflow-x:auto;margin-top:8px}
@@ -361,15 +366,21 @@ function parseHonors(t){
   const ci={name:find(/danh hieu|title|honou?r/),count:find(/so lan|count|so luong/),season:find(/^mua|season|^nam|year/),
     team:find(/^doi|team|clb|club/),img:find(/^anh\b|image|hinh|icon/),note:find(/ghi chu|note/)};
   if(ci.name<0)ci.name=0;
-  return a.slice(hi+1).map(r=>{const g=k=>ci[k]<0?"":(r[ci[k]]||"").trim();
-    return{name:g("name"),count:num(g("count")),season:g("season"),team:g("team"),img:g("img"),note:g("note")}}).filter(x=>x.name);
+  const out=[];
+  a.slice(hi+1).forEach(r=>{
+    const g=k=>ci[k]<0?"":(r[ci[k]]||"").trim(),name=g("name");if(!name)return;
+    const ss=g("season").split(/[;,\n]/).map(x=>x.trim()).filter(Boolean);   // 1 ô có thể ghi nhiều mùa, cách nhau bằng dấu ;
+    if(ss.length>1)ss.forEach(se=>out.push({name,count:1,season:se,team:g("team"),img:g("img"),note:g("note")}));
+    else out.push({name,count:num(g("count")),season:ss[0]||"",team:g("team"),img:g("img"),note:g("note")});
+  });
+  return out;
 }
 // Gộp theo tên danh hiệu để vẽ hàng danh hiệu ở đầu trang
 function aggHonors(list){
   const m=new Map();
   list.forEach(h=>{const g=m.get(h.name)||{name:h.name,count:0,img:"",note:[]};
-    g.count+=h.count||1;if(h.img&&!g.img)g.img=h.img;
-    if(h.note)g.note.push(h.note);else if(h.season)g.note.push(h.season+(h.team?" ("+h.team+")":""));
+    g.count+=h.count||(h.season||h.team?1:0);if(h.img&&!g.img)g.img=h.img;
+    const nt=h.note||(h.season?h.season+(h.team?" ("+h.team+")":""):"");if(nt&&!g.note.includes(nt))g.note.push(nt);
     m.set(h.name,g)});
   return[...m.values()].map(g=>({...g,note:g.note.join(", ")}));
 }
@@ -393,8 +404,14 @@ async function loadHonors(){
     if(!res.ok)throw new Error("HTTP "+res.status);
     const t=await res.text();
     if(/<html/i.test(t.slice(0,300)))throw new Error("tab chưa xuất bản");
-    honorsAll=parseHonors(t);renderHonors(aggHonors(honorsAll));
-  }catch(e){/* lỗi thì giữ nguyên hàng danh hiệu đang hiển thị */}
+    const list=parseHonors(t);
+    if(!list.length)throw new Error("tab trống hoặc sai tên cột");
+    honorsAll=list;renderHonors(aggHonors(honorsAll));
+  }catch(e){
+    // Đã có dữ liệu cũ thì giữ nguyên; chưa có thì báo lý do để dễ tìm lỗi
+    if(!honorsAll.length){const el=$("honors");el.hidden=false;honorsKey="";
+      el.innerHTML='<span class="note" style="grid-column:1/-1">Chưa đọc được tab Danh hiệu ('+esc(e.message)+'). Kiểm tra link HONORS_URL (xuất bản đúng tab, định dạng CSV) và tên cột trong dòng 1.</span>'}
+  }
 }
 
 // ===== 10. CHI TIẾT ĐỘI (bấm vào một cột đội) =====
@@ -415,17 +432,27 @@ function openTeam(i){
   const yr=ys.length?(a===z?""+a:a+" - "+z):"";
   const lgu=(sp.rows.find(r=>/^https?:\/\//i.test(r.logo))||{}).logo,base=CONFIG.IMG_DIR+slug(sp.n);
   const ini=sp.n.split(/\s+/).map(w=>w[0]).join("").slice(0,2).toUpperCase();
-  const chip=h=>`<span class="hb">${honorPic(h.name,h.img,"sm")}${esc(h.name)}</span>`;
-  const cell=l=>l.length?l.map(chip).join(""):"—";
+  const grp=l=>{const m=new Map();l.forEach(h=>{const g=m.get(h.name)||{...h,n:0,ss:[]};g.n+=h.count||1;if(h.season&&!g.ss.includes(h.season))g.ss.push(h.season);m.set(h.name,g)});return[...m.values()]};   // cùng danh hiệu -> ×N + danh sách mùa
+  const chip=h=>`<span class="hb">${honorPic(h.name,h.img,"sm")}<span>${esc(h.name)}${h.n>1?" ×"+h.n:""}${h.ss&&h.ss.length?` <span class="note">(${esc(h.ss.join(", "))})</span>`:""}</span></span>`;
+  // Dòng mùa gộp nhiều năm (vd 07/2009 - 07/2018) thì ghi rõ các mùa đạt danh hiệu; dòng một mùa thì không cần
+  const multi=r=>{const y=yrs(r.season);return y.length>0&&Math.max(...y)-Math.min(...y)>1};
+  const cell=(l,sh)=>l.length?grp(l).map(h=>chip(sh?h:{...h,ss:[]})).join(""):"—";
   const teamRows=rows.filter(r=>norm(r.team)===norm(sp.n));
   const first=view.findIndex(x=>norm(x.n)===norm(sp.n))===i;   // danh hiệu chưa khớp mùa nào chỉ liệt kê ở lần đầu của đội
   const other=first?honorsAll.filter(h=>h.team&&norm(h.team)===norm(sp.n)&&!teamRows.some(r=>inRow(h,r))):[];
+  // Khối "Danh hiệu theo mùa": chỉ hiện khi đội có dòng mùa gộp nhiều năm (vd 07/2009 - 07/2018).
+  // Lấy mùa từ tab Danh hiệu nên KHÔNG cần tách số bàn thắng thành từng mùa trong tab chính.
+  const aggH=[];rs.forEach(r=>{if(multi(r))honorsAll.filter(h=>inRow(h,r)).forEach(h=>aggH.push(h))});
+  const bySeason=new Map();aggH.forEach(h=>{const k=h.season.trim();if(!bySeason.has(k))bySeason.set(k,[]);bySeason.get(k).push(h)});
+  const seasonBlock=aggH.length?'<div class="hs"><div class="hst">Danh hiệu theo mùa</div>'+
+    [...bySeason.entries()].sort((x,y)=>Math.max(...yrs(x[0]))-Math.max(...yrs(y[0]))).map(([se,l])=>`<div class="hsr"><span class="hsy">${esc(se)}</span><span>${grp(l).map(h=>chip({...h,ss:[]})).join("")}</span></div>`).join("")+'</div>':"";
   $("mdb").innerHTML=`<div class="mh"><span class="lg"><span class="badge">${esc(ini)}</span><img src="${esc(lgu||base+".png")}" alt="" data-b="${esc(lgu?"":base)}" data-i="0" onerror="logoNext(this)"></span><div><div class="mn">${esc(sp.n)}</div><div class="note">${esc(yr)}</div></div><div class="mtot"><b>${S.total}</b>bàn</div></div>
     ${S.total?`<div class="sb" style="margin:8px 0 10px">${segs(S,"width")}</div>`:""}
     <div class="scroll"><table class="mt"><tr><th>Mùa</th><th>Tổng</th><th>Trực tiếp</th><th>Penalty</th><th>Đá phạt</th>${showUn?"<th>Chưa phân loại</th>":""}<th class="hh">Danh hiệu</th></tr>`+
     rs.map(r=>`<tr><td>${esc(r.season)}</td><td><b>${r.total}</b></td><td>${r.op}</td><td>${r.pe}</td><td>${r.fk}</td>${showUn?`<td>${r.un}</td>`:""}<td class="hh">${cell(honorsAll.filter(h=>inRow(h,r)))}</td></tr>`).join("")+
-    `<tr><td><b>Cộng</b></td><td><b>${S.total}</b></td><td>${S.op}</td><td>${S.pe}</td><td>${S.fk}</td>${showUn?`<td>${S.un}</td>`:""}<td class="hh"></td></tr></table></div>`+
-    (other.length?`<p class="mo"><b>Danh hiệu khác của đội:</b> ${other.map(h=>chip(h)+(h.season?`<span class="note">(${esc(h.season)})</span>`:"")).join(" ")}</p>`:"");
+    `<tr><td><b>Cộng</b></td><td><b>${S.total}</b></td><td>${S.op}</td><td>${S.pe}</td><td>${S.fk}</td>${showUn?`<td>${S.un}</td>`:""}<td class="hh"></td></tr></table></div>`+seasonBlock+
+    (other.length?`<p class="mo"><b>Danh hiệu khác của đội:</b> ${other.map(h=>chip({...h,n:h.count||1,ss:h.season?[h.season]:[]})).join(" ")}</p>`:"")+
+    (!honorsAll.length?`<p class="mo note">${HSRC?"Chưa có dữ liệu danh hiệu (tab Danh hiệu trống, chưa đọc được hoặc sai tên cột).":"Chưa nối tab Danh hiệu: điền link vào HONORS_URL trong phần CONFIG."}</p>`:"");
   $("md").hidden=false;
 }
 
