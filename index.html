@@ -13,13 +13,17 @@
      --op  = màu "Trực tiếp" (xanh lá)     --pe = màu "Penalty" (vàng)
      --fk  = màu "Đá phạt" (xanh dương)    --un = màu "Chưa phân loại" (xám)
      --hd  = màu nền phần đầu trang        --bg = màu nền trang
-     --veil = lớp phủ mờ lên ảnh nền để chữ dễ đọc (rgba cuối là độ đậm: .0 = không phủ, .5 = phủ nhiều)
+     --veil = lớp phủ tối lên toàn bộ ảnh nền (số cuối của rgba: 0 = không phủ, .5 = phủ nhiều)
+     --card-op = độ đặc của các thẻ trắng (nhỏ hơn = trong hơn, thấy ảnh nền nhiều hơn)
+     --blur = độ mờ của ảnh nền ở phía sau các thẻ (0px = không mờ)
      --bh  = chiều cao tối đa của cột (đang tự co theo chiều cao màn hình;
-             muốn cột cao hơn thì giảm số 540, muốn thấp hơn thì tăng số 540)
+             muốn cột cao hơn thì giảm số 586, muốn thấp hơn thì tăng số 586)
    Khối @media (prefers-color-scheme:dark) là màu khi máy bật chế độ tối. */
-:root{--bg:#eef1ee;--card:#fff;--tx:#14231c;--mu:#5d6b63;--line:#d9dfdb;--hd:#0f3d2e;--op:#1f7a4d;--pe:#e3a21a;--fk:#2f6fb5;--un:#85918a;
-  --bh:clamp(70px,calc(100vh - 540px),240px);
-  --veil:rgba(0,0,0,.08)}
+:root{--bg:#eef1ee;--card:#fff;--tx:#14231c;--mu:#36423b;--line:#d9dfdb;--hd:#0f3d2e;--op:#1f7a4d;--pe:#e3a21a;--fk:#2f6fb5;--un:#6b7872;
+  --bh:clamp(50px,calc(100vh - 586px),240px);
+  --veil:rgba(0,0,0,.08);
+  --card-op:62%;   /* ĐỘ ĐẶC của các thẻ: 100% = đặc hẳn, càng nhỏ càng trong (thử 45% - 75%; thấp quá thì chữ khó đọc) */
+  --blur:0px}      /* ĐỘ MỜ của ảnh nền sau thẻ: 0px = ảnh nét, 4px = mờ nhẹ, 8px = mờ nhiều */
 @media (prefers-color-scheme:dark){:root{--bg:#0e1511;--card:#17211b;--tx:#eaf1ec;--mu:#97a69d;--line:#2a3830;--hd:#0a2a20;--op:#3fae77;--pe:#f0b43a;--fk:#5b9be0;--un:#56635b;--veil:rgba(0,0,0,.15)}}
 /* ----- Khung chung: font chữ, nền trang ----- */
 *{box-sizing:border-box}
@@ -39,9 +43,8 @@ h1{margin:0;font-size:1.8rem;font-weight:700;letter-spacing:.03em;line-height:1.
 .dob{opacity:.85;font-size:.9rem}
 /* ----- Khung nội dung chính và thẻ trắng (.card) ----- */
 main{max-width:1280px;margin:0 auto;padding:8px 14px}
-/* ĐỘ TRONG CỦA THẺ: số % trong color-mix (70%) càng nhỏ thì thẻ càng trong, thấy nhiều ảnh nền hơn (100% = đặc hoàn toàn).
-   blur(4px) làm mờ ảnh phía sau thẻ để chữ vẫn dễ đọc; tăng/giảm số 4 tùy ý, bỏ hẳn nếu máy chậm. */
-.card{background:var(--card);background:color-mix(in srgb,var(--card) 58%,transparent);-webkit-backdrop-filter:blur(2px);backdrop-filter:blur(4px);border:1px solid var(--line);border-radius:6px;padding:8px 14px;margin:0 0 8px}
+/* Thẻ trắng: độ đặc và độ mờ chỉnh ở --card-op và --blur trong :root (đầu phần CSS) */
+.card{background:var(--card);background:color-mix(in srgb,var(--card) var(--card-op),transparent);-webkit-backdrop-filter:blur(var(--blur));backdrop-filter:blur(var(--blur));border:1px solid var(--line);border-radius:6px;padding:8px 14px;margin:0 0 8px}
 h2{margin:0 0 8px;font-size:.95rem;font-weight:600}
 /* ----- Ô TỔNG SỐ BÀN: số to bên trái, 3 loại bàn thắng bên phải, thanh chia màu bên dưới ----- */
 .kpi{display:grid;grid-template-columns:auto 1fr;gap:6px 24px;align-items:center}
@@ -94,6 +97,43 @@ button:focus-visible,summary:focus-visible{outline:3px solid var(--pe);outline-o
 .lg .badge,.lg img{position:absolute;inset:0;width:100%;height:100%;border-radius:50%}
 .lg .badge{background:var(--hd);color:#fff;display:flex;align-items:center;justify-content:center;font-size:.65rem;font-weight:600}
 .lg img{object-fit:contain;background:#fff}
+/* ----- THANH TAB (Thống kê | Ảnh) ----- */
+.tabs{display:flex;gap:6px;margin:0 0 8px}
+.tabs button[aria-pressed=true]{background:var(--op);color:#fff;border-color:var(--op)}
+/* ----- TAB ẢNH -----
+   .galwrap = khung cuộn riêng (chiều cao = màn hình trừ phần đầu trang) nên cả trang vẫn gọn một màn hình
+   .gal = lưới ảnh dạng "gạch": column-width:220px = bề ngang mỗi cột ảnh (nhỏ hơn thì nhiều cột hơn)
+   Ảnh ngang, dọc, vuông đều được giữ nguyên tỷ lệ, không bị cắt. column-gap / margin-bottom = khoảng cách giữa ảnh */
+.galwrap{height:calc(100vh - 170px);min-height:200px;overflow-y:auto;border-radius:6px}
+.gal{column-width:220px;column-gap:8px}
+.gal img{width:100%;display:block;margin:0 0 8px;border-radius:6px;break-inside:avoid;cursor:zoom-in;background:var(--line)}
+.galmsg{background:var(--card);padding:10px 14px;border-radius:6px}
+/* ----- Xem ảnh phóng to (bấm vào ảnh) ----- */
+.lb{position:fixed;inset:0;background:rgba(0,0,0,.9);display:flex;align-items:center;justify-content:center;z-index:50}
+.lb[hidden]{display:none}
+.lb img{max-width:92vw;max-height:90vh;object-fit:contain;border-radius:4px}
+.lb button{position:absolute;width:44px;height:44px;border-radius:50%;border:0;background:rgba(255,255,255,.18);color:#fff;font-size:1.5rem;padding:0}
+#lbx{top:14px;right:14px}#lbp{left:14px;top:50%}#lbn{right:14px;top:50%}
+/* ----- BẢNG CHI TIẾT ĐỘI (hiện khi bấm vào một cột đội) -----
+   .md = lớp nền tối | .mc = khung trắng ở giữa (width:min(800px,...) = độ rộng tối đa) | .mt = bảng từng mùa
+   .hb = một danh hiệu (ảnh nhỏ + tên) | .pic.sm = cỡ ảnh nhỏ của danh hiệu (22px) */
+.tcol[data-s]{cursor:pointer;border-radius:6px;padding:2px 4px}
+.tcol[data-s]:hover,.tcol[data-s]:focus-visible{background:rgba(127,127,127,.2);outline:none}
+.md{position:fixed;inset:0;background:rgba(0,0,0,.6);display:flex;align-items:center;justify-content:center;z-index:40;padding:14px}
+.md[hidden]{display:none}
+.mc{position:relative;background:var(--card);color:var(--tx);border-radius:10px;padding:16px 18px;width:min(800px,100%);max-height:88vh;overflow:auto}
+#mdx{position:absolute;top:10px;right:10px;width:32px;height:32px;padding:0;border-radius:50%}
+.mh{display:flex;align-items:center;gap:12px;padding-right:40px}
+.mh .lg{width:44px;height:44px}
+.mn{font-weight:600;text-transform:uppercase;letter-spacing:.03em}
+.mtot{margin-left:auto;color:var(--mu);font-size:.9rem;white-space:nowrap}
+.mtot b{font-family:"Barlow Condensed","Arial Narrow",sans-serif;font-size:2rem;color:var(--tx);margin-right:4px}
+.mt th,.mt td{text-align:right;white-space:normal}
+.mt th:first-child,.mt td:first-child,.mt th.hh,.mt td.hh{text-align:left}
+.hb{display:inline-flex;align-items:center;gap:5px;margin:2px 10px 2px 0;font-size:.8rem}
+.pic.sm{width:22px;height:22px}
+.pic.sm .b2{font-size:.8rem;border-radius:5px}
+.mo{margin:10px 0 0;font-size:.85rem}
 /* ----- Bảng chi tiết từng mùa (mục bấm để mở) ----- */
 details summary{cursor:pointer;font-weight:600;font-size:.95rem}
 .scroll{overflow-x:auto;margin-top:8px}
@@ -119,6 +159,11 @@ th{color:var(--mu);font-weight:500}
 <main>
   <!-- Chỗ hiện dòng thông báo vàng (lỗi tải sheet / dữ liệu mẫu) -->
   <div id="warn"></div>
+  <!-- Thanh tab: chuyển giữa Thống kê và Ảnh -->
+  <div class="tabs"><button data-tab="stats" aria-pressed="true">Thống kê</button><button data-tab="photos" aria-pressed="false">Ảnh<span id="tabph"></span></button></div>
+
+  <!-- ===== TAB THỐNG KÊ ===== -->
+  <section id="tab-stats">
   <!-- Ô tổng số bàn + Trực tiếp / Penalty / Đá phạt (số liệu do JS điền) -->
   <div class="card kpi">
     <div><div class="lab" id="title">Tổng số bàn thắng</div><div class="big"><span id="total">0</span><small>bàn</small></div></div>
@@ -133,10 +178,20 @@ th{color:var(--mu);font-weight:500}
     <div class="right"><span class="note" id="status">Đang tải…</span><button id="refresh">Làm mới</button></div>
   </div>
   <!-- Biểu đồ cột đứng theo đội (đổi tiêu đề ở chữ trong <h2>) -->
-  <div class="card"><h2>Bàn thắng theo đội bóng</h2><div class="tcols" id="teams"></div></div>
+  <div class="card"><h2>Bàn thắng theo đội bóng <span class="note">· bấm vào từng cột để xem chi tiết từng mùa và danh hiệu</span></h2><div class="tcols" id="teams"></div></div>
   <!-- Bảng chi tiết từng mùa (bấm để mở). Đổi tên mục ở chữ trong <summary> -->
   <details class="card"><summary>Chi tiết từng mùa</summary><div class="scroll"><table id="tbl"></table></div></details>
+  </section>
+
+  <!-- ===== TAB ẢNH: ảnh lấy từ thư mục img/anh/ (xem phần 9 trong JS) ===== -->
+  <section id="tab-photos" hidden>
+    <div class="galwrap"><div class="gal" id="gal"></div><p class="note galmsg" id="galmsg" hidden></p></div>
+  </section>
 </main>
+<!-- Khung xem ảnh phóng to -->
+<div class="lb" id="lb" hidden><button id="lbx" aria-label="Đóng">✕</button><button id="lbp" aria-label="Ảnh trước">‹</button><img id="lbi" alt=""><button id="lbn" aria-label="Ảnh sau">›</button></div>
+<!-- Bảng chi tiết đội (hiện khi bấm một cột đội) -->
+<div class="md" id="md" hidden><div class="mc" role="dialog" aria-modal="true"><button id="mdx" aria-label="Đóng">✕</button><div id="mdb"></div></div></div>
 <script>
 /* ================= JAVASCRIPT = XỬ LÝ SỐ LIỆU =================
    MỤC LỤC (tìm bằng Ctrl+F):
@@ -148,6 +203,8 @@ th{color:var(--mu);font-weight:500}
      6. VẼ GIAO DIỆN      - hàm render(): tổng, nút lọc, biểu đồ, bảng
      7. TẢI TỪ SHEET      - toCsv(), load(), tự làm mới
      8. DANH HIỆU         - đọc tab Danh hiệu và vẽ hàng danh hiệu
+     9. TAB ẢNH           - tự liệt kê ảnh trong thư mục, lưới ảnh, xem phóng to
+    10. CHI TIẾT ĐỘI      - bấm cột đội -> bảng từng mùa: số bàn + danh hiệu
 */
 /* ====== CẤU HÌNH ======
    Sheet: dòng 1 là tên cột, các dòng sau là dữ liệu. Cột Năm nên để định dạng "Văn bản thuần túy".
@@ -159,7 +216,13 @@ const CONFIG = {
   SHEET_URL: "https://docs.google.com/spreadsheets/d/e/2PACX-1vTpdeW4IUJJCLd1FQf0tp6Tk7QPcdKQeRlaOcJoLbx7eFPXdFi3TI3Vt-BI4rUKXCidHkQBTF--xxpL/pub?gid=416152327&single=true&output=csv",
   REFRESH_SECONDS: 15,   // tự tải lại sheet sau mỗi N giây
   // Link tab "Danh hiệu" của Google Sheet (Xuất bản lên web -> chọn đúng tab đó -> định dạng CSV). Để trống = ẩn hàng danh hiệu
-  HONORS_URL: "https://docs.google.com/spreadsheets/d/e/2PACX-1vTpdeW4IUJJCLd1FQf0tp6Tk7QPcdKQeRlaOcJoLbx7eFPXdFi3TI3Vt-BI4rUKXCidHkQBTF--xxpL/pub?gid=209915987&single=true&output=csv",
+  HONORS_URL: "",
+  // Tab Ảnh: bỏ ảnh vào thư mục này (nên tách riêng khỏi logo cho khỏi lẫn)
+  GALLERY_DIR: "img/anh/",
+  // "tên-github/tên-repo" (vd "VietanhAries/CR"). Để trống = tự đoán từ địa chỉ trang github.io
+  GITHUB_REPO: "",
+  // Dự phòng khi không tự đọc được thư mục (vd mở file trực tiếp trên máy): ghi tay tên file, vd ["a.jpg","b.png"]
+  GALLERY_FILES: [],
   PLAYER_NAME: "Cristiano Ronaldo",   // tên hiện ở giữa phần đầu trang
   BIRTHDATE: "05/02/1985",   // ngày sinh (hiện dòng dưới tên)
   IMG_DIR: "img/"   /* img/logo.png (góc trái), img/image.png (góc phải), img/realmadrid.png ... */
@@ -189,7 +252,7 @@ const SRC=new URLSearchParams(location.search).get("sheet")||CONFIG.SHEET_URL;
 // Mỗi dòng: [mã loại, tên hiển thị]. Muốn đổi chữ hiển thị thì sửa chữ thứ hai.
 // Màu của từng loại nằm ở CSS (--op, --pe, --fk, --un).
 const CATS=[["op","Trực tiếp"],["pe","Penalty"],["fk","Đá phạt"],["un","Chưa phân loại"]];
-let rows=[],team="all";
+let rows=[],team="all",view=[];
 
 // ===== 5. ĐỌC FILE CSV =====
 // parseCSV: tách văn bản CSV thành các dòng/ô (không cần sửa)
@@ -264,13 +327,14 @@ function render(){
   const tl=spells.map(sp=>({n:sp.n,rows:sp.rows,t:sum(sp.rows),st:startOf(sp.rows),nat:isNat(sp.n)}))
     .sort((x,y)=>(x.nat-y.nat)||(x.st-y.st)||(y.t.total-x.t.total));
   const tm=Math.max(1,...tl.map(x=>x.t.total));
-  $("teams").innerHTML=tl.map(({n,rows:l,t})=>{
+  view=tl;   // lưu danh sách cột đang hiển thị để biết bấm vào đội nào
+  $("teams").innerHTML=tl.map(({n,rows:l,t},ix)=>{
     const ys=l.flatMap(r=>(r.season.match(/\d{4}/g)||[]).map(Number));
     const a=Math.min(...ys),z=Math.max(...ys),yr=ys.length?(a===z?""+a:a+" - "+z):"";
     const lg=(byTeam[n].find(r=>/^https?:\/\//i.test(r.logo))||{}).logo;
     const ini=n.split(/\s+/).map(w=>w[0]).join("").slice(0,2).toUpperCase();
     const base=CONFIG.IMG_DIR+slug(n);
-    return `<div class="tcol"><span class="t">${t.total}</span><div class="stack" style="--r:${t.total/tm}">${segs(t,"height")}</div><div class="nmrow"><span class="nm">${esc(n)}</span><span class="lg"><span class="badge">${esc(ini)}</span><img src="${esc(lg||base+".png")}" alt="" data-b="${esc(lg?"":base)}" data-i="0" onerror="logoNext(this)"></span></div><span>${esc(yr)}</span></div>`}).join("")||'<span class="note">Chưa có dữ liệu.</span>';
+    return `<div class="tcol" data-s="${ix}" tabindex="0" role="button" aria-label="Xem chi tiết ${esc(n)}"><span class="t">${t.total}</span><div class="stack" style="--r:${t.total/tm}">${segs(t,"height")}</div><div class="nmrow"><span class="nm">${esc(n)}</span><span class="lg"><span class="badge">${esc(ini)}</span><img src="${esc(lg||base+".png")}" alt="" data-b="${esc(lg?"":base)}" data-i="0" onerror="logoNext(this)"></span></div><span>${esc(yr)}</span></div>`}).join("")||'<span class="note">Chưa có dữ liệu.</span>';
 
   // (5) Bảng chi tiết từng mùa (nằm trong mục bấm để mở)
   const showUn=S.un>0;
@@ -280,42 +344,137 @@ function render(){
 }
 
 // ===== 8. DANH HIỆU =====
-// Tab "Danh hiệu" trong Google Sheet có các cột: Danh hiệu | Số lần | Ảnh (tuỳ chọn) | Ghi chú (tuỳ chọn)
-// Ảnh minh họa: mặc định là img/<tên danh hiệu viết liền, không dấu>.png (ví dụ "Quả bóng vàng" -> img/quabongvang.png).
-// Cột Ảnh (nếu điền): tên file trong img/ (vd quabongvang.png) hoặc link ảnh https://...
-// Ghi chú hiện khi rê chuột vào danh hiệu (vd các năm đạt được).
+// Đọc tab "Danh hiệu" trong Google Sheet. Cột (chỉ cần có "Danh hiệu"):
+//   Danh hiệu | Mùa | Đội | Số lần | Ảnh | Ghi chú
+// Cách ghi 1 (khuyên dùng) - mỗi dòng là MỘT lần đạt: "Quả bóng vàng | 2007-2008 | Man United" (bỏ trống Số lần = 1 lần).
+//   -> vừa tính vào hàng danh hiệu ở đầu trang, vừa hiện trong bảng chi tiết mùa của đội đó.
+// Cách ghi 2 - dòng tổng hợp: "Cúp C1 | | | 5"  -> chỉ tính vào hàng danh hiệu, không hiện trong chi tiết mùa.
+// Cột Mùa và Đội phải ghi GIỐNG tab chính (vd "2007-2008", "Man United"). Danh hiệu ghi theo năm (vd "2008")
+// thì tính cho mùa kết thúc năm đó (2007-2008). Cột Ảnh = tên file trong img/ hoặc link https://.
 const HSRC=new URLSearchParams(location.search).get("honors")||CONFIG.HONORS_URL;
-let honorsKey="";
+let honorsKey="",honorsAll=[];
 function parseHonors(t){
   const a=parseCSV(t).filter(r=>r.some(c=>c.trim()));if(!a.length)return[];
   let hi=a.slice(0,5).findIndex(r=>r.map(norm).some(c=>/danh hieu|title|honou?r/.test(c)));if(hi<0)hi=0;
   const h=a[hi].map(norm);
   const find=re=>h.findIndex(x=>re.test(x));
-  const ci={name:find(/danh hieu|title|honou?r/),count:find(/so lan|count|so luong/),img:find(/^anh\b|image|hinh|icon/),note:find(/ghi chu|note|year|nam\b/)};
-  ["name","count","img","note"].forEach((k,i)=>{if(ci[k]<0)ci[k]=i});
-  return a.slice(hi+1).map(r=>{const g=k=>(r[ci[k]]||"").trim();
-    return{name:g("name"),count:num(g("count")),img:g("img"),note:g("note")}}).filter(x=>x.name);
+  const ci={name:find(/danh hieu|title|honou?r/),count:find(/so lan|count|so luong/),season:find(/^mua|season|^nam|year/),
+    team:find(/^doi|team|clb|club/),img:find(/^anh\b|image|hinh|icon/),note:find(/ghi chu|note/)};
+  if(ci.name<0)ci.name=0;
+  return a.slice(hi+1).map(r=>{const g=k=>ci[k]<0?"":(r[ci[k]]||"").trim();
+    return{name:g("name"),count:num(g("count")),season:g("season"),team:g("team"),img:g("img"),note:g("note")}}).filter(x=>x.name);
+}
+// Gộp theo tên danh hiệu để vẽ hàng danh hiệu ở đầu trang
+function aggHonors(list){
+  const m=new Map();
+  list.forEach(h=>{const g=m.get(h.name)||{name:h.name,count:0,img:"",note:[]};
+    g.count+=h.count||1;if(h.img&&!g.img)g.img=h.img;
+    if(h.note)g.note.push(h.note);else if(h.season)g.note.push(h.season+(h.team?" ("+h.team+")":""));
+    m.set(h.name,g)});
+  return[...m.values()].map(g=>({...g,note:g.note.join(", ")}));
+}
+// Ảnh minh họa danh hiệu: cột Ảnh, nếu trống thì img/<tên danh hiệu viết liền không dấu>.png
+function honorPic(name,imgf,cls){
+  const isUrl=/^https?:\/\//i.test(imgf||"");
+  const base=CONFIG.IMG_DIR+(imgf&&!isUrl?imgf.replace(/\.(png|jpe?g|webp|svg)$/i,""):slug(name));
+  return `<span class="pic ${cls||""}"><span class="b2">★</span><img src="${esc(isUrl?imgf:base+".png")}" alt="" data-b="${esc(isUrl?"":base)}" data-i="0" onerror="logoNext(this)"></span>`;
 }
 function renderHonors(list){
   const el=$("honors"),key=JSON.stringify(list);
   if(!list.length){el.hidden=true;el.innerHTML="";honorsKey="";return}
   if(key===honorsKey)return;   // không đổi thì khỏi vẽ lại
   honorsKey=key;el.hidden=false;
-  el.innerHTML=list.map(h=>{
-    const isUrl=/^https?:\/\//i.test(h.img);
-    const base=CONFIG.IMG_DIR+(h.img&&!isUrl?h.img.replace(/\.(png|jpe?g|webp|svg)$/i,""):slug(h.name));
-    return `<div class="h" title="${esc(h.note||h.name)}"><span class="pic"><span class="b2">★</span><img src="${esc(isUrl?h.img:base+".png")}" alt="" data-b="${esc(isUrl?"":base)}" data-i="0" onerror="logoNext(this)"></span><span class="ht"><span class="hc">${h.count?"×"+h.count:""}</span><span class="hn">${esc(h.name)}</span></span></div>`}).join("");
+  el.innerHTML=list.map(h=>`<div class="h" title="${esc(h.note||h.name)}">${honorPic(h.name,h.img)}<span class="ht"><span class="hc">${h.count?"×"+h.count:""}</span><span class="hn">${esc(h.name)}</span></span></div>`).join("");
 }
 async function loadHonors(){
-  if(!HSRC){renderHonors([]);return}
+  if(!HSRC){honorsAll=[];renderHonors([]);return}
   try{
     const res=await fetch(toCsv(HSRC),{cache:"no-store"});
     if(!res.ok)throw new Error("HTTP "+res.status);
     const t=await res.text();
     if(/<html/i.test(t.slice(0,300)))throw new Error("tab chưa xuất bản");
-    renderHonors(parseHonors(t));
+    honorsAll=parseHonors(t);renderHonors(aggHonors(honorsAll));
   }catch(e){/* lỗi thì giữ nguyên hàng danh hiệu đang hiển thị */}
 }
+
+// ===== 10. CHI TIẾT ĐỘI (bấm vào một cột đội) =====
+// Hiện bảng từng mùa của lần tham gia đó: số bàn (chia 3 loại) + danh hiệu đạt được trong mùa.
+const yrs=x=>((x||"").match(/\d{4}/g)||[]).map(Number);
+// Danh hiệu h có thuộc dòng mùa r không? (cùng đội + mùa khớp; dòng gộp nhiều mùa thì danh hiệu nằm trong khoảng đó)
+function inRow(h,r){
+  if(!h.team||norm(h.team)!==norm(r.team))return false;
+  const hy=yrs(h.season),ry=yrs(r.season);if(!hy.length||!ry.length)return false;
+  const ha=Math.min(...hy),hz=Math.max(...hy),ra=Math.min(...ry),rz=Math.max(...ry);
+  if(rz-ra>1)return ha>=ra&&hz<=rz;
+  return hz-ha<=1&&hz===rz;
+}
+function openTeam(i){
+  const sp=view[i];if(!sp)return;
+  const S=sp.t,rs=[...sp.rows].sort((x,y)=>x.key-y.key),showUn=S.un>0;
+  const ys=yrs(rs.map(r=>r.season).join(" ")),a=Math.min(...ys),z=Math.max(...ys);
+  const yr=ys.length?(a===z?""+a:a+" - "+z):"";
+  const lgu=(sp.rows.find(r=>/^https?:\/\//i.test(r.logo))||{}).logo,base=CONFIG.IMG_DIR+slug(sp.n);
+  const ini=sp.n.split(/\s+/).map(w=>w[0]).join("").slice(0,2).toUpperCase();
+  const chip=h=>`<span class="hb">${honorPic(h.name,h.img,"sm")}${esc(h.name)}</span>`;
+  const cell=l=>l.length?l.map(chip).join(""):"—";
+  const teamRows=rows.filter(r=>norm(r.team)===norm(sp.n));
+  const first=view.findIndex(x=>norm(x.n)===norm(sp.n))===i;   // danh hiệu chưa khớp mùa nào chỉ liệt kê ở lần đầu của đội
+  const other=first?honorsAll.filter(h=>h.team&&norm(h.team)===norm(sp.n)&&!teamRows.some(r=>inRow(h,r))):[];
+  $("mdb").innerHTML=`<div class="mh"><span class="lg"><span class="badge">${esc(ini)}</span><img src="${esc(lgu||base+".png")}" alt="" data-b="${esc(lgu?"":base)}" data-i="0" onerror="logoNext(this)"></span><div><div class="mn">${esc(sp.n)}</div><div class="note">${esc(yr)}</div></div><div class="mtot"><b>${S.total}</b>bàn</div></div>
+    ${S.total?`<div class="sb" style="margin:8px 0 10px">${segs(S,"width")}</div>`:""}
+    <div class="scroll"><table class="mt"><tr><th>Mùa</th><th>Tổng</th><th>Trực tiếp</th><th>Penalty</th><th>Đá phạt</th>${showUn?"<th>Chưa phân loại</th>":""}<th class="hh">Danh hiệu</th></tr>`+
+    rs.map(r=>`<tr><td>${esc(r.season)}</td><td><b>${r.total}</b></td><td>${r.op}</td><td>${r.pe}</td><td>${r.fk}</td>${showUn?`<td>${r.un}</td>`:""}<td class="hh">${cell(honorsAll.filter(h=>inRow(h,r)))}</td></tr>`).join("")+
+    `<tr><td><b>Cộng</b></td><td><b>${S.total}</b></td><td>${S.op}</td><td>${S.pe}</td><td>${S.fk}</td>${showUn?`<td>${S.un}</td>`:""}<td class="hh"></td></tr></table></div>`+
+    (other.length?`<p class="mo"><b>Danh hiệu khác của đội:</b> ${other.map(h=>chip(h)+(h.season?`<span class="note">(${esc(h.season)})</span>`:"")).join(" ")}</p>`:"");
+  $("md").hidden=false;
+}
+
+// ===== 9. TAB ẢNH =====
+// Trang web tĩnh không tự biết trong thư mục có những file nào, nên khi chạy trên GitHub Pages trang hỏi GitHub
+// (api.github.com) danh sách file trong GALLERY_DIR, rồi lưu tạm 10 phút để đỡ gọi nhiều.
+// Muốn thêm ảnh: chỉ cần upload ảnh vào thư mục img/anh/ trên GitHub, không phải sửa code.
+const IMG_RE=/\.(png|jpe?g|webp|gif|avif)$/i;
+let photos=[],pi=0,galLoaded=false;
+function repoGuess(){
+  const q=new URLSearchParams(location.search).get("repo");   // ?repo=ten/repo dùng để thử
+  if(q)return q;
+  if(CONFIG.GITHUB_REPO)return CONFIG.GITHUB_REPO;
+  const h=location.hostname;
+  if(h.endsWith(".github.io"))return h.split(".")[0]+"/"+(location.pathname.split("/")[1]||h);
+  return "";
+}
+async function listPhotos(){
+  const dir=CONFIG.GALLERY_DIR.replace(/\/+$/,""),repo=repoGuess(),ck="gal:"+repo+"/"+dir;
+  if(repo){
+    try{const c=JSON.parse(localStorage.getItem(ck)||"null");if(c&&Date.now()-c.t<600000)return c.f}catch(e){}
+    try{
+      const res=await fetch("https://api.github.com/repos/"+repo+"/contents/"+dir);
+      if(!res.ok)throw new Error("HTTP "+res.status);
+      const f=(await res.json()).filter(x=>x.type==="file"&&IMG_RE.test(x.name)).map(x=>x.name);
+      try{localStorage.setItem(ck,JSON.stringify({t:Date.now(),f}))}catch(e){}
+      return f;
+    }catch(e){}
+  }
+  return CONFIG.GALLERY_FILES.filter(n=>IMG_RE.test(n));
+}
+async function loadGallery(){
+  const msg=$("galmsg");msg.hidden=false;msg.textContent="Đang tải danh sách ảnh…";
+  const f=(await listPhotos()).sort((a,b)=>a.localeCompare(b,"vi",{numeric:true}));
+  galLoaded=true;
+  photos=f.map(n=>CONFIG.GALLERY_DIR+encodeURIComponent(n));
+  $("gal").innerHTML=photos.map((u,i)=>`<img src="${esc(u)}" loading="lazy" decoding="async" alt="Ảnh ${i+1}" data-i="${i}" onerror="this.remove()">`).join("");
+  $("tabph").textContent=photos.length?" ("+photos.length+")":"";
+  msg.hidden=photos.length>0;
+  if(!photos.length)msg.textContent="Chưa có ảnh. Hãy bỏ ảnh vào thư mục "+CONFIG.GALLERY_DIR+" trên GitHub (trang tự đọc danh sách). Nếu đang mở file trực tiếp trên máy thì điền tên file vào CONFIG.GALLERY_FILES.";
+}
+function showTab(t){
+  document.querySelectorAll(".tabs button").forEach(b=>b.setAttribute("aria-pressed",String(b.dataset.tab===t)));
+  $("tab-stats").hidden=t!=="stats";$("tab-photos").hidden=t!=="photos";
+  if(t==="photos"&&!galLoaded)loadGallery();
+  try{history.replaceState(null,"",t==="photos"?"#anh":location.pathname+location.search)}catch(e){}
+}
+function openLb(i){pi=(i+photos.length)%photos.length;$("lbi").src=photos[pi];$("lb").hidden=false}
+function closeLb(){$("lb").hidden=true}
 
 // ===== 7. TẢI DỮ LIỆU TỪ GOOGLE SHEET =====
 // toCsv: chuẩn hóa link sheet (link "pub?...output=csv" dùng nguyên, không cần sửa)
@@ -353,6 +512,19 @@ $("chips").addEventListener("click",e=>{const b=e.target.closest("button");if(b)
 $("refresh").addEventListener("click",load);
 load();setInterval(load,CONFIG.REFRESH_SECONDS*1000);
 loadHonors();setInterval(loadHonors,CONFIG.REFRESH_SECONDS*1000);
+// Tab ảnh: bấm tab, bấm ảnh để phóng to, phím ← → Esc
+document.querySelector(".tabs").addEventListener("click",e=>{const b=e.target.closest("button");if(b)showTab(b.dataset.tab)});
+$("gal").addEventListener("click",e=>{const i=e.target.dataset.i;if(i!==undefined)openLb(+i)});
+$("lbx").onclick=closeLb;$("lbp").onclick=()=>openLb(pi-1);$("lbn").onclick=()=>openLb(pi+1);
+$("lb").addEventListener("click",e=>{if(e.target===$("lb"))closeLb()});
+document.addEventListener("keydown",e=>{if($("lb").hidden)return;if(e.key==="Escape")closeLb();if(e.key==="ArrowLeft")openLb(pi-1);if(e.key==="ArrowRight")openLb(pi+1)});
+// Bảng chi tiết đội: bấm cột đội (hoặc Enter), đóng bằng nút X, bấm ra ngoài hoặc Esc
+$("teams").addEventListener("click",e=>{const c=e.target.closest(".tcol");if(c)openTeam(+c.dataset.s)});
+$("teams").addEventListener("keydown",e=>{if(e.key==="Enter"||e.key===" "){const c=e.target.closest(".tcol");if(c){e.preventDefault();openTeam(+c.dataset.s)}}});
+$("mdx").onclick=()=>{$("md").hidden=true};
+$("md").addEventListener("click",e=>{if(e.target===$("md"))$("md").hidden=true});
+document.addEventListener("keydown",e=>{if(e.key==="Escape")$("md").hidden=true});
+if(location.hash==="#anh")showTab("photos");
 </script>
 </body>
 </html>
