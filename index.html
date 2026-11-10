@@ -134,6 +134,10 @@ button:focus-visible,summary:focus-visible{outline:3px solid var(--pe);outline-o
 .pic.sm{width:22px;height:22px}
 .pic.sm .b2{font-size:.8rem;border-radius:5px}
 .mo{margin:10px 0 0;font-size:.85rem}
+/* ----- CÂU CHUYỆN (hiện ở đầu bảng chi tiết đội). Xuống dòng trong ô Google Sheet (Alt+Enter) được giữ nguyên -----
+   border-left = vạch màu bên trái | line-height = giãn dòng | đổi cỡ chữ ở font-size nếu muốn */
+.st{margin:10px 0 6px;padding:8px 12px;border-left:4px solid var(--op);background:rgba(127,127,127,.1);border-radius:0 6px 6px 0}
+.st p{margin:2px 0 6px;white-space:pre-line;line-height:1.6}
 /* ----- KHỐI "DANH HIỆU THEO MÙA" trong bảng chi tiết đội (.hsy = cột mùa, đổi min-width cho rộng/hẹp) ----- */
 .hs{margin-top:12px;border-top:1px solid var(--line);padding-top:8px}
 .hst{font-weight:600;font-size:.9rem;margin-bottom:2px}
@@ -215,7 +219,7 @@ th{color:var(--mu);font-weight:500}
    Sheet: dòng 1 là tên cột, các dòng sau là dữ liệu. Cột Năm nên để định dạng "Văn bản thuần túy".
    SHEET_URL: dán link Google Sheet (hoặc thêm ?sheet=LINK vào địa chỉ trang).
    Sheet cần chia sẻ "Bất kỳ ai có đường liên kết đều xem được".
-   Cột: Đội bóng | Năm | Tổng số bàn | Trực tiếp | Penalty | Đá phạt | Logo (tuỳ chọn, link ảnh) */
+   Cột: Đội bóng | Năm | Tổng số bàn | Trực tiếp | Penalty | Đá phạt | Logo (tuỳ chọn, link ảnh) | Câu chuyện (tuỳ chọn) */
 const CONFIG = {
   // Link Google Sheet đã "Xuất bản lên web" dạng CSV (hoặc thêm ?sheet=LINK vào địa chỉ trang)
   SHEET_URL: "https://docs.google.com/spreadsheets/d/e/2PACX-1vTpdeW4IUJJCLd1FQf0tp6Tk7QPcdKQeRlaOcJoLbx7eFPXdFi3TI3Vt-BI4rUKXCidHkQBTF--xxpL/pub?gid=416152327&single=true&output=csv",
@@ -270,7 +274,7 @@ function parseCSV(t){const r=[];let row=[],f="",q=false;for(let i=0;i<t.length;i
 // parse: tìm dòng tiêu đề rồi đọc từng dòng dữ liệu.
 // Cột được nhận ra theo TÊN CỘT trong sheet (không phân biệt hoa thường, không cần dấu).
 // Muốn thêm tên cột khác được nhận, thêm từ khóa (đã bỏ dấu, chữ thường) vào các danh sách trong find([...]) bên dưới:
-//   team = đội bóng | season = năm | total = tổng | op = trực tiếp | pe = penalty | fk = đá phạt | logo = link logo
+//   team = đội bóng | season = năm | total = tổng | op = trực tiếp | pe = penalty | fk = đá phạt | logo = link logo | story = câu chuyện
 let info="";
 function parse(t){
   const a=parseCSV(t).filter(r=>r.some(c=>c.trim()));
@@ -279,14 +283,15 @@ function parse(t){
   let hi=a.slice(0,5).findIndex(r=>{const x=r.map(norm);return x.some(c=>/doi bong|team|clb|club/.test(c))&&x.some(c=>/tong|total|truc tiep|penalty|da phat/.test(c))});
   if(hi<0)hi=0;
   const h=a[hi].map(norm);
-  const find=(ks,skip)=>h.findIndex((x,i)=>i!==skip&&ks.some(k=>x.includes(k)));
-  const ci={team:find(["doi bong","team","clb","cau lac bo","club"]),season:find(["nam","season","mua"]),
-    total:find(["tong","total"]),logo:find(["logo"]),op:find(["truc tiep","open"]),pe:find(["penalty","phat den"])};
-  ci.fk=find(["free","da phat"],ci.pe);
+  const find=(ks,skip)=>h.findIndex((x,i)=>![].concat(skip===undefined?[]:skip).includes(i)&&ks.some(k=>x.includes(k)));
+  const st=find(["cau chuyen","story"]);   // cột Câu chuyện (tuỳ chọn); các cột khác bỏ qua cột này để khỏi nhầm
+  const ci={team:find(["doi bong","team","clb","cau lac bo","club"],st),season:find(["nam","season","mua"],st),
+    total:find(["tong","total"],st),logo:find(["logo"],st),op:find(["truc tiep","open"],st),pe:find(["penalty","phat den"],st),story:st};
+  ci.fk=find(["free","da phat"],[ci.pe,st]);
   ["team","season","total","op","pe","fk"].forEach((k,i)=>{if(ci[k]<0)ci[k]=i});
   return a.slice(hi+1).map(r=>{const g=k=>(r[ci[k]]||"").trim();
     const op=num(g("op")),pe=num(g("pe")),fk=num(g("fk")),s=op+pe+fk,total=Math.max(num(g("total")),s);
-    return{team:g("team"),season:g("season"),key:parseInt(g("season"))||9999,logo:g("logo"),op,pe,fk,total,un:total-s}
+    return{team:g("team"),season:g("season"),key:parseInt(g("season"))||9999,logo:g("logo"),op,pe,fk,total,un:total-s,story:g("story")}
   }).filter(x=>x.team||x.season);
 }
 
@@ -446,7 +451,11 @@ function openTeam(i){
   const bySeason=new Map();aggH.forEach(h=>{const k=h.season.trim();if(!bySeason.has(k))bySeason.set(k,[]);bySeason.get(k).push(h)});
   const seasonBlock=aggH.length?'<div class="hs"><div class="hst">Danh hiệu theo mùa</div>'+
     [...bySeason.entries()].sort((x,y)=>Math.max(...yrs(x[0]))-Math.max(...yrs(y[0]))).map(([se,l])=>`<div class="hsr"><span class="hsy">${esc(se)}</span><span>${grp(l).map(h=>chip({...h,ss:[]})).join("")}</span></div>`).join("")+'</div>':"";
+  // Câu chuyện của đội (cột "Câu chuyện" ở tab chính) hiện ngay đầu bảng, trước số bàn thắng và danh hiệu
+  const sts=rs.filter(r=>r.story);
+  const storyBlock=sts.length?'<div class="st"><div class="hst">Câu chuyện</div>'+sts.map(r=>(sts.length>1?`<div class="note">${esc(r.season)}</div>`:"")+`<p>${esc(r.story)}</p>`).join("")+'</div>':"";
   $("mdb").innerHTML=`<div class="mh"><span class="lg"><span class="badge">${esc(ini)}</span><img src="${esc(lgu||base+".png")}" alt="" data-b="${esc(lgu?"":base)}" data-i="0" onerror="logoNext(this)"></span><div><div class="mn">${esc(sp.n)}</div><div class="note">${esc(yr)}</div></div><div class="mtot"><b>${S.total}</b>bàn</div></div>
+    ${storyBlock}
     ${S.total?`<div class="sb" style="margin:8px 0 10px">${segs(S,"width")}</div>`:""}
     <div class="scroll"><table class="mt"><tr><th>Mùa</th><th>Tổng</th><th>Trực tiếp</th><th>Penalty</th><th>Đá phạt</th>${showUn?"<th>Chưa phân loại</th>":""}<th class="hh">Danh hiệu</th></tr>`+
     rs.map(r=>`<tr><td>${esc(r.season)}</td><td><b>${r.total}</b></td><td>${r.op}</td><td>${r.pe}</td><td>${r.fk}</td>${showUn?`<td>${r.un}</td>`:""}<td class="hh">${cell(honorsAll.filter(h=>inRow(h,r)))}</td></tr>`).join("")+
